@@ -70,8 +70,8 @@ function pageControler(index: number, prev?: { player: BGMPlayer, page: Page }) 
                 comic.style.display = null
 
                 page.appendTo(pages)
-                player.start(pageData[0].sound)
-                player.play()
+                player.start()
+                player.play(pageData[0].sound)
 
                 if (pageDataList[index + 1]) {
                     next.textContent = 'next'
