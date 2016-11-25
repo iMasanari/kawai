@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "outFile": "./js/bundle.js",
+        "target": "es5",
+        "noImplicitAny": false,
+        "sourceMap": false
+    },
+    "files": [
+        "ts/index.ts"
+    ]
+}
