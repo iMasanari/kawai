@@ -9,6 +9,7 @@ class BGMPlayer {
     isntStarted: string[] = []
     playlist: { [name: string]: BGMControl } = {}
     playing: string | null = null
+    isTouchStart = false
 
     loadAll(playlist: string[], callback?: Function) {
         let loadingCounter = 0
@@ -63,6 +64,16 @@ class BGMPlayer {
         if (name) {
             this.playlist[name].gain.value = 1
             this.playing = name
+        }
+
+        if (!this.isTouchStart) {
+            this.isTouchStart = true
+            const mobilestart = () => {
+                document.removeEventListener('touchstart', mobilestart)
+                this.start(name)
+            }
+
+            document.addEventListener('touchstart', mobilestart)
         }
     }
     play(name?: string) {

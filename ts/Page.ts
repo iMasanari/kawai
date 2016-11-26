@@ -43,7 +43,7 @@ class Page {
         window.removeEventListener('scroll', this.scroll, false)
 
         this.pageList.forEach(({el}) => {
-            el.parentNode.removeChild(el)
+            if (el.parentNode) el.parentNode.removeChild(el)
         })
     }
     scroll = (() => {

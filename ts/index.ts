@@ -1,5 +1,6 @@
 /// <reference path="BGMPlayer.ts" />
 /// <reference path="Page.ts" />
+
 interface PageData {
     image: string
     sound: string
@@ -39,56 +40,100 @@ const comic = document.getElementById('comic')
 const pages = document.getElementById('pages')
 const next = document.getElementById('next')
 
-let pageIndex = 0
-let nextPage = () => { }
+let nextButton = () => { }
+let prevPage: Page | null = null
 
-topPage.addEventListener('click', () => { nextPage() })
-next.addEventListener('click', () => { nextPage() })
+topPage.addEventListener('click', () => { nextButton() })
+next.addEventListener('click', () => { nextButton() })
 
 const player = new BGMPlayer();
 
-pageControler(pageIndex)
+interface logData {
+    page: Page
+    player: BGMPlayer
+}
 
-function pageControler(index: number, prev?: { player: BGMPlayer, page: Page }) {
-    const pageData = pageDataList[index]
-    let loadedContent = 2;
+const pageLog: { [index: number]: Page } = {}
 
-    player.loadAll(pageData.map(v => v.sound), loader)
-    let page = new Page(pageData.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } })), loader)
+pageControler((+location.hash.slice(1) || 0) - 1)
 
-    nextPage = () => { }
+window.addEventListener('hashchange', () => {
+    pageControler((+location.hash.slice(1) || 0) - 1)
+})
 
-    function loader() {
-        if (!--loadedContent) {
-            nextPage = () => {
-                scrollTo(0, 0)
+function pageControler(index: number) {
+    for (const key in pageLog) if (pageLog.hasOwnProperty(key)) {
+        pageLog[key].remove()
+    }
 
-                if (prev && prev.player) prev.player.end()
-                if (prev && prev.page) prev.page.remove()
+    if (index < 0) {
+        topPage.style.display = null
+        comic.style.display = 'none'
+        player.end()
 
-                topPage.style.display = 'none'
-                comic.style.display = null
+        nextLoad()
+    } else {
+        topPage.style.display = 'none'
+        comic.style.display = null
 
-                page.appendTo(pages)
+        console.log(pageLog);
+
+        if (pageLog[index]) {
+            pageLog[index].appendTo(pages)
+            player.play(pageDataList[index][0].sound)
+
+            nextLoad()
+        } else {
+            const pageData = pageDataList[index]
+
+            player.loadAll(pageData.map(v => v.sound), () => {
                 player.start()
                 player.play(pageData[0].sound)
 
-                if (pageDataList[index + 1]) {
-                    next.textContent = 'next'
-                    pageControler(index + 1, { player, page })
-                } else {
-                    next.textContent = 'top'
+                const list = pageData.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } }))
+                const page = new Page(list, () => {
+                    pageLog[index] = page
+                    console.log(pageLog);
 
-                    nextPage = () => {
-                        topPage.style.display = null
-                        comic.style.display = 'none'
+                    page.appendTo(pages)
 
-                        player.end()
-                        page.remove()
+                    nextLoad()
+                })
+            })
+        }
+    }
 
-                        pageControler(0)
-                    }
+    function nextLoad() {
+        const nextPage = pageDataList[index + 1]
+
+        if (nextPage) {
+            if (pageLog[index + 1]) {
+                callback()
+            } else {
+                next.textContent = 'loading...'
+                nextButton = () => { }
+
+                player.loadAll(nextPage.map(v => v.sound), () => {
+                    let page = new Page(nextPage.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } })), () => {
+                        pageLog[index + 1] = page
+                        callback()
+                    })
+                })
+
+            }
+            function callback() {
+                next.textContent = 'next'
+                nextButton = () => {
+                    if (pageLog[index]) pageLog[index].remove()
+                    player.start()
+                    location.href = '#' + (index + 2)
+                    window.scrollTo(0, 0)
                 }
+            }
+        } else {
+            next.textContent = 'top'
+            nextButton = () => {
+                location.href = '#'
             }
         }
     }
