@@ -19,14 +19,17 @@ class Page {
     load(url: { url: string, visit: Function }, callback: Function) {
         const image = new Image()
         const el = document.createElement('div')
-        const data = { el, image, visit: url.visit }
 
         el.className = 'page'
-        this.pageList.push(data)
+        this.pageList.push({
+            el,
+            image,
+            visit: url.visit
+        })
 
         image.onload = () => {
-            data.el.appendChild(image)
-            callback(callback)
+            el.appendChild(image)
+            callback()
         }
 
         image.src = url.url
@@ -58,7 +61,7 @@ class Page {
 
             if (val < border) {
                 if (this.active !== val) {
-                    this.active = val
+                    this.active = val!
                     const page = this.pageList[i]
                     page.visit()
                 }

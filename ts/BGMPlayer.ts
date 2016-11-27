@@ -86,6 +86,8 @@ class BGMPlayer {
             }
         }
 
+        name = name!
+
         this.playing = name
 
         if (this.playlist[name]) {
@@ -94,8 +96,9 @@ class BGMPlayer {
         }
     }
     end() {
-        if (this.playlist[this.playing]) {
-            this.playlist[this.playing].gain.value = 0
+        const ref = this.playlist[this.playing!]
+        if (ref) {
+            ref.gain.value = 0
         }
 
         this.playing = null

@@ -1,0 +1,12 @@
+{
+  "name": "kawai",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p .",
+    "build:w": "tsc -w -p ."
+  },
+  "devDependencies": {
+    "typescript": "2.0.6"
+  }
+}

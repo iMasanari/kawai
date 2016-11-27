@@ -8,10 +8,10 @@ interface PageData {
 
 declare const pageDataList: PageData[][]
 
-const topPage = document.getElementById('top')
-const comic = document.getElementById('comic')
-const pages = document.getElementById('pages')
-const next = document.getElementById('next')
+const topPage = document.getElementById('top')!
+const comic = document.getElementById('comic')!
+const pages = document.getElementById('pages')!
+const next = document.getElementById('next')!
 
 let nextButton = () => { }
 let prevPage: Page | null = null
@@ -44,7 +44,7 @@ function pageControler(index: number) {
         comic.style.display = 'none'
         player.end()
 
-        nextLoad()
+        preload(index + 1)
     } else {
         topPage.style.display = 'none'
         comic.style.display = null
@@ -55,7 +55,7 @@ function pageControler(index: number) {
             pageLog[index].appendTo(pages)
             player.play(pageDataList[index][0].sound)
 
-            nextLoad()
+            preload(index + 1)
         } else {
             const pageData = pageDataList[index]
 
@@ -70,17 +70,18 @@ function pageControler(index: number) {
 
                     page.appendTo(pages)
 
-                    nextLoad()
+                    preload(index + 1)
                 })
             })
         }
     }
+}
 
-    function nextLoad() {
-        const nextPage = pageDataList[index + 1]
+    function preload(index: number) {
+        const nextPage = pageDataList[index]
 
         if (nextPage) {
-            if (pageLog[index + 1]) {
+            if (pageLog[index]) {
                 callback()
             } else {
                 next.textContent = 'loading...'
@@ -88,7 +89,7 @@ function pageControler(index: number) {
 
                 player.loadAll(nextPage.map(v => v.sound), () => {
                     let page = new Page(nextPage.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } })), () => {
-                        pageLog[index + 1] = page
+                        pageLog[index] = page
                         callback()
                     })
                 })
@@ -97,9 +98,9 @@ function pageControler(index: number) {
             function callback() {
                 next.textContent = 'next'
                 nextButton = () => {
-                    if (pageLog[index]) pageLog[index].remove()
+                    if (pageLog[index - 1]) pageLog[index - 1].remove()
                     player.start()
-                    location.href = '#' + (index + 2)
+                    location.href = '#' + (index + 1)
                     window.scrollTo(0, 0)
                 }
             }
@@ -110,4 +111,3 @@ function pageControler(index: number) {
             }
         }
     }
-}
