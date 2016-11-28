@@ -1,13 +1,14 @@
-interface BGMControl {
-    source: AudioBufferSourceNode
-    gain: AudioParam
+namespace BGMPlayer {
+    export interface Controler {
+        source: AudioBufferSourceNode
+        gain: AudioParam
+    }
 }
 
 class BGMPlayer {
     context = new (window.AudioContext || window.webkitAudioContext)()
-
-    isntStarted: string[] = []
-    playlist: { [name: string]: BGMControl } = {}
+    bufferList: { [name: string]: AudioBuffer } = {}
+    playinglist: { [name: string]: BGMPlayer.Controler } = {}
     playing: string | null = null
     isTouchStart = false
 
@@ -31,72 +32,60 @@ class BGMPlayer {
 
         xhr.onload = () => {
             this.context.decodeAudioData(xhr.response, buffer => {
-                const source = this.context.createBufferSource()
-                const gainNode = this.context.createGain()
+                this.bufferList[url] = buffer
 
-                source.buffer = buffer
-                source.loop = true
-                gainNode.gain.value = 0
-
-                source.connect(gainNode)
-                gainNode.connect(this.context.destination)
-
-                if (!this.playlist[url]) {
-                    this.isntStarted.push(url)
-
-                    this.playlist[url] = {
-                        source: source,
-                        gain: gainNode.gain
-                    }
-                }
                 if (callback) callback()
             })
         }
 
         xhr.send()
     }
-    start(name?: string) {
-        for (const value of this.isntStarted) {
-            this.playlist[value].source.start()
-        }
-        this.isntStarted = []
-
-        if (name) {
-            this.playlist[name].gain.value = 1
-            this.playing = name
+    getControler(url: string): BGMPlayer.Controler {
+        if (this.playinglist[url]) {
+            this.playinglist[url].source.stop()
         }
 
-        if (!this.isTouchStart) {
-            this.isTouchStart = true
-            const mobilestart = () => {
-                document.removeEventListener('touchstart', mobilestart)
-                this.start(name)
-            }
+        const source = this.context.createBufferSource()
+        const gainNode = this.context.createGain()
 
-            document.addEventListener('touchstart', mobilestart)
+        source.buffer = this.bufferList[url]
+        source.loop = true
+        gainNode.gain.value = 0
+
+        source.connect(gainNode)
+        gainNode.connect(this.context.destination)
+
+        return {
+            source: source,
+            gain: gainNode.gain
         }
     }
-    play(name?: string) {
-        this.end()
-
-        if (name == null) {
-            for (const key in this.playlist) if (this.playlist.hasOwnProperty(key)) {
-                name = key
-                break
-            }
+    start(isUserEvent?: boolean) {
+        for (const url in this.bufferList) if (this.bufferList.hasOwnProperty(url)) {
+            const controler = this.playinglist[url] = this.getControler(url)
+            controler.source.start()
         }
 
-        name = name!
+        if (!isUserEvent && !this.isTouchStart) {
+            this.isTouchStart = true
+            document.addEventListener('touchstart', this.mobilestart)
+        }
+    }
+    mobilestart = (e: Event) => {
+        document.removeEventListener(e.type, this.mobilestart)
+        this.start()
+    }
+    play(name: string) {
+        this.end()
 
         this.playing = name
 
-        if (this.playlist[name]) {
-            // this.playlist[name].source.start()
-            this.playlist[name].gain.value = 1
+        if (this.playinglist[name]) {
+            this.playinglist[name].gain.value = 1
         }
     }
     end() {
-        const ref = this.playlist[this.playing!]
+        const ref = this.playinglist[this.playing!]
         if (ref) {
             ref.gain.value = 0
         }

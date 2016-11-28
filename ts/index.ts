@@ -8,10 +8,10 @@ interface PageData {
 
 declare const pageDataList: PageData[][]
 
-const topPage = document.getElementById('top')!
-const comic = document.getElementById('comic')!
-const pages = document.getElementById('pages')!
-const next = document.getElementById('next')!
+const topPage = document.getElementById('top') !
+const comic = document.getElementById('comic') !
+const pages = document.getElementById('pages') !
+const next = document.getElementById('next') !
 
 let nextButton = () => { }
 let prevPage: Page | null = null
@@ -49,16 +49,14 @@ function pageControler(index: number) {
         topPage.style.display = 'none'
         comic.style.display = null
 
-        console.log(pageLog);
+        const pageData = pageDataList[index]
 
         if (pageLog[index]) {
             pageLog[index].appendTo(pages)
-            player.play(pageDataList[index][0].sound)
+            player.play(pageData[0].sound)
 
             preload(index + 1)
         } else {
-            const pageData = pageDataList[index]
-
             player.loadAll(pageData.map(v => v.sound), () => {
                 player.start()
                 player.play(pageData[0].sound)
@@ -66,8 +64,6 @@ function pageControler(index: number) {
                 const list = pageData.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } }))
                 const page = new Page(list, () => {
                     pageLog[index] = page
-                    console.log(pageLog);
-
                     page.appendTo(pages)
 
                     preload(index + 1)
@@ -77,37 +73,38 @@ function pageControler(index: number) {
     }
 }
 
-    function preload(index: number) {
-        const nextPage = pageDataList[index]
+function preload(index: number) {
+    const nextPage = pageDataList[index]
 
-        if (nextPage) {
-            if (pageLog[index]) {
-                callback()
-            } else {
-                next.textContent = 'loading...'
-                nextButton = () => { }
-
-                player.loadAll(nextPage.map(v => v.sound), () => {
-                    let page = new Page(nextPage.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } })), () => {
-                        pageLog[index] = page
-                        callback()
-                    })
-                })
-
-            }
-            function callback() {
-                next.textContent = 'next'
-                nextButton = () => {
-                    if (pageLog[index - 1]) pageLog[index - 1].remove()
-                    player.start()
-                    location.href = '#' + (index + 1)
-                    window.scrollTo(0, 0)
-                }
-            }
+    if (nextPage) {
+        if (pageLog[index]) {
+            loaded()
         } else {
-            next.textContent = 'top'
+            next.textContent = 'loading...'
+            nextButton = () => { }
+
+            player.loadAll(nextPage.map(v => v.sound), () => {
+                const list = nextPage.map(v => ({ url: v.image, visit: () => { player.play(v.sound) } }))
+                let page = new Page(list, () => {
+                    pageLog[index] = page
+                    loaded()
+                })
+            })
+        }
+
+        function loaded() {
+            next.textContent = 'next'
             nextButton = () => {
-                location.href = '#'
+                if (pageLog[index - 1]) pageLog[index - 1].remove()
+                player.start(true)
+                location.href = '#' + (index + 1)
+                window.scrollTo(0, 0)
             }
         }
+    } else {
+        next.textContent = 'top'
+        nextButton = () => {
+            location.href = '#'
+        }
     }
+}
