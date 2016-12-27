@@ -4,18 +4,28 @@ body{
 	padding: 0;
 	margin: 0;
 }
+
 .top {
 	width: 100vw;
 	height: 100vh;
-	background: linear-gradient(#0085D1, #ED73FF);
-}
-.logo {
-	width: 100%;
-	height: 100%;
-	background: url('../pic/toxlogo1.png') center no-repeat;
+	background: center no-repeat ;
+	background-image: url('../pic/toxlogo1.png'), linear-gradient(#0085D1, #ED73FF);
 	background-size: contain;
 }
+.title {
+	margin: 0;
+	overflow: hidden;
+	text-indent: 100%;
+	white-space: nowrap;
+}
+
+.pages {
+	padding: 0;
+	margin: 0;
+}
 .page {
+	padding: 0;
+	margin: 0;
 	min-height: 100vh;
 	
 	-webkit-display: flex;
@@ -27,10 +37,14 @@ body{
 }
 .page > img {
 	width: 100%;
-	max-width: 141vh;
+	max-width: 141.4vh;
 }
 
-.next{
+.loading {
+	margin: 30px;
+	text-align: center;
+}
+.next {
 	margin: 30px;
 	text-align: center;
 }

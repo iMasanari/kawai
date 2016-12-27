@@ -1,70 +1,80 @@
 /// <reference path="BGMPlayer.ts" />
 /// <reference path="Page.ts" />
-
-interface PageData {
-    image: string
-    sound: string
-}
-
-declare const pageDataList: PageData[][]
+/// <reference path="pageData.d.ts" />
 
 const topPage = document.getElementById('top') !
 const comic = document.getElementById('comic') !
+const loading = document.getElementById('loading') !
 const next = document.getElementById('next') !
 
-let nextButton = () => { }
-let prevPage: Page | null = null
+type Model = number
+/** Model */
+let pageIndex: Model
 
-topPage.addEventListener('click', () => { nextButton() })
-next.addEventListener('click', () => { nextButton() })
+const bgm = new BGMPlayer()
+const page = new Page(document.getElementById('pages') !, bgm)
 
-const player = new BGMPlayer();
-const page = new Page(document.getElementById('pages') !, player);
+bgm.start()
 
+topPage.addEventListener('click', nextButton)
+next.addEventListener('click', nextButton)
+window.addEventListener('hashchange', router)
 
-player.start()
-pageControler(+location.hash.slice(1) || 0)
+router()
 
-window.addEventListener('hashchange', () => {
-    pageControler(+location.hash.slice(1) || 0)
-})
+function router() {
+    pageIndex = +location.hash.slice(1) || 0
+    update()
+}
 
-function pageControler(index: number) {
-    next.textContent = 'loading...'
-    nextButton = () => { }
+function nextButton() {
+    scrollTo(0, 0)
+    location.hash = pageDataList[pageIndex] ? `#${pageIndex + 1}` : '#'
+}
+
+function update() {
     page.clear()
-    player.end()
+    bgm.stop()
 
-    // player.start()
-
-    if (index === 0) {
-        topPage.style.display = null
-        comic.style.display = 'none'
-        next.textContent = 'next'
-        nextButton = () => {
-            location.hash = '#1'
-        }
+    if (pageIndex === 0) {
+        render('top')
     }
     else {
-        topPage.style.display = 'none'
-        comic.style.display = null
-        const pageData = pageDataList[index - 1]
+        render('comic-loading')
+
+        const pageData = pageDataList[pageIndex - 1]
 
         page.createScene(pageData, () => {
-            const nextData = pageDataList[index]
-
-            if (nextData) {
-                next.textContent = 'next'
-                nextButton = () => {
-                    // player.start(true)
-                    location.hash = '#' + (index + 1)
-                }
-            }
-            else {
-                // 最後のページまで行った時の処理
-                next.textContent = 'top'
-                nextButton = () => { location.hash = '#' }
-            }
+            render('comic-loaded')
         })
+    }
+}
+
+type State = 'top' | 'comic-loading' | 'comic-loaded'
+
+function render(state: State) {
+    switch (state) {
+        case 'top': {
+            topPage.style.display = null
+            comic.style.display = 'none'
+
+            break
+        }
+        case 'comic-loading': {
+            topPage.style.display = 'none'
+            comic.style.display = null
+            loading.style.display = null
+            next.style.display = 'none'
+
+            break
+        }
+        case 'comic-loaded': {
+            topPage.style.display = 'none'
+            comic.style.display = null
+            loading.style.display = 'none'
+            next.style.display = null
+
+            break
+        }
     }
 }

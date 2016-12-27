@@ -8,21 +8,8 @@ namespace BGMPlayer {
 class BGMPlayer {
     context = new (window.AudioContext || window.webkitAudioContext)()
     bufferList: { [name: string]: AudioBuffer } = {}
-    playinglist: { [name: string]: BGMPlayer.Controler } = {}
-    playing: string | null = null
-    isTouchStart = false
-
-    loadAll(playlist: string[], callback?: Function) {
-        let loadingCounter = 0
-        const loaded = () => {
-            if (!--loadingCounter && callback) callback()
-        }
-
-        for (const url of playlist) {
-            ++loadingCounter
-            this.load(url, loaded)
-        }
-    }
+    playing: BGMPlayer.Controler | null = null
+    startTime = 0
 
     load(url: string, callback?: Function) {
         const xhr = new XMLHttpRequest()
@@ -41,16 +28,11 @@ class BGMPlayer {
         xhr.send()
     }
     getControler(url: string): BGMPlayer.Controler {
-        if (this.playinglist[url]) {
-            this.playinglist[url].source.stop()
-        }
-
         const source = this.context.createBufferSource()
         const gainNode = this.context.createGain()
 
         source.buffer = this.bufferList[url]
         source.loop = true
-        gainNode.gain.value = 0
 
         source.connect(gainNode)
         gainNode.connect(this.context.destination)
@@ -63,32 +45,28 @@ class BGMPlayer {
     start(isUserEvent?: boolean) {
         this.context.createBufferSource().start()
 
-        if (!isUserEvent && !this.isTouchStart) {
-            this.isTouchStart = true
-            document.addEventListener('touchstart', this.mobilestart)
+        if (!isUserEvent) {
+            const mobilestart = (e: Event) => {
+                document.removeEventListener(e.type, mobilestart)
+                this.start(true)
+            }
+
+            document.addEventListener('touchstart', mobilestart)
         }
     }
-    mobilestart = (e: Event) => {
-        document.removeEventListener(e.type, this.mobilestart)
-        this.start()
+    setStartTime() {
+        this.startTime = this.context.currentTime
     }
     play(name: string) {
-        this.end()
+        this.stop()
 
-        this.playing = name
+        const offsetTime = (this.context.currentTime - this.startTime) % this.bufferList[name].duration;
 
-        if (!this.playinglist[name]) {
-            this.playing = name
-            this.playinglist[name] = this.getControler(name)
-            this.playinglist[name].source.start(this.context.currentTime)
-        }
-        this.playinglist[name].gain.value = 1
+        this.playing = this.getControler(name)
+        this.playing.source.start(0, offsetTime)
     }
-    end() {
-        const ref = this.playinglist[this.playing!]
-        if (ref) {
-            ref.gain.value = 0
-        }
+    stop() {
+        if (this.playing) this.playing.source.stop()
 
         this.playing = null
     }
