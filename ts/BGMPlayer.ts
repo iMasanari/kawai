@@ -61,10 +61,7 @@ class BGMPlayer {
         }
     }
     start(isUserEvent?: boolean) {
-        for (const url in this.bufferList) if (this.bufferList.hasOwnProperty(url)) {
-            const controler = this.playinglist[url] = this.getControler(url)
-            controler.source.start()
-        }
+        this.context.createBufferSource().start()
 
         if (!isUserEvent && !this.isTouchStart) {
             this.isTouchStart = true
@@ -80,9 +77,12 @@ class BGMPlayer {
 
         this.playing = name
 
-        if (this.playinglist[name]) {
-            this.playinglist[name].gain.value = 1
+        if (!this.playinglist[name]) {
+            this.playing = name
+            this.playinglist[name] = this.getControler(name)
+            this.playinglist[name].source.start(this.context.currentTime)
         }
+        this.playinglist[name].gain.value = 1
     }
     end() {
         const ref = this.playinglist[this.playing!]
