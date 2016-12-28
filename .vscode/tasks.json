@@ -2,8 +2,29 @@
     "version": "0.1.0",
     "command": "npm",
     "isShellCommand": true,
-    "args": ["run", "build:w"],
-    "showOutput": "silent",
-    "isWatching": true,
-    "problemMatcher": "$tsc-watch"
+    "suppressTaskName": true,
+    "args": ["run"],
+    "tasks": [
+        {
+            "taskName": "build:w",
+            "args": ["build:w"],
+            "problemMatcher": "$tsc-watch",
+            "isWatching": true,
+            "isBuildCommand": true
+        },
+        {
+            "taskName": "build",
+            "problemMatcher": "$tsc",
+            "args": ["build"]
+        },
+        {
+            "taskName": "build:min",
+            "problemMatcher": "$tsc",
+            "args": ["build:min"]
+        },
+        {
+            "taskName": "min",
+            "args": ["min"]
+        }
+    ]
 }

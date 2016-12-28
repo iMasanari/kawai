@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "build": "tsc -p .",
-    "build:w": "tsc -w -p ."
+    "build:w": "tsc -w -p .",
+    "build:min": "npm run build && npm run min",
+    "min": "uglifyjs ./js/bundle.js -o ./js/bundle.js -m -c -e"
   },
   "devDependencies": {
     "typescript": "2.0.6"
