@@ -7,9 +7,10 @@ const comic = document.getElementById('comic') !
 const loading = document.getElementById('loading') !
 const next = document.getElementById('next') !
 
-type Model = number
 /** Model */
-let pageIndex: Model
+type State = 'top' | 'comic-loading' | 'comic-loaded'
+let pageIndex: number
+let pageState: State
 
 const bgm = new BGMPlayer()
 const page = new Page(document.getElementById('pages') !, bgm)
@@ -23,8 +24,7 @@ window.addEventListener('hashchange', router)
 router()
 
 function router() {
-    pageIndex = +location.hash.slice(1) || 0
-    update()
+    update(+location.hash.slice(1) || 0)
 }
 
 function nextButton() {
@@ -32,28 +32,28 @@ function nextButton() {
     location.hash = pageDataList[pageIndex] ? `#${pageIndex + 1}` : '#'
 }
 
-function update() {
+function update(index: number) {
+    pageIndex = index
+
     page.clear()
     bgm.stop()
 
     if (pageIndex === 0) {
         render('top')
+        preloadBGM()
     }
     else {
         render('comic-loading')
 
-        const pageData = pageDataList[pageIndex - 1]
-
-        page.createScene(pageData, () => {
+        page.createScene(pageDataList[pageIndex - 1], () => {
             render('comic-loaded')
+            preloadBGM()
         })
     }
 }
 
-type State = 'top' | 'comic-loading' | 'comic-loaded'
-
 function render(state: State) {
-    switch (state) {
+    switch (pageState = state) {
         case 'top': {
             topPage.style.display = null
             comic.style.display = 'none'
@@ -77,4 +77,24 @@ function render(state: State) {
             break
         }
     }
+}
+
+function preloadBGM() {
+    const nextPage = pageDataList[pageIndex]
+
+    if (!nextPage) return
+
+    const loop = (list: PageData[]) => {
+        if (pageState === 'comic-loading') return
+
+        const page = list.shift()
+
+        if (page === undefined) return
+
+        bgm.load(page.sound, () => {
+            loop(list)
+        })
+    }
+
+    loop(nextPage.slice())
 }

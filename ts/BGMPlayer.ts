@@ -11,7 +11,13 @@ class BGMPlayer {
     playing: BGMPlayer.Controler | null = null
     startTime = 0
 
-    load(url: string, callback?: Function) {
+    load(url: string, callback?: () => any) {
+        // キャッシュをチェック
+        if (this.bufferList[url]) {
+            if (callback) requestAnimationFrame(callback)
+            return
+        }
+
         const xhr = new XMLHttpRequest()
 
         xhr.open('GET', url)

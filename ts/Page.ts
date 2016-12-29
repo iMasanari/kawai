@@ -75,14 +75,6 @@ class Page {
         el.className = 'page'
         el.appendChild(img)
     }
-    imageLoad(url: string, callback?: (this: HTMLImageElement, ev: Event) => any) {
-        const image = new Image()
-
-        if (callback) image.onload = callback
-        image.src = url
-
-        return image
-    }
     clear() {
         ++this.sceneHash
 
@@ -120,7 +112,7 @@ class Page {
     }
 }
 
-const Loader = (callback?: (...arg: any[]) => any) => {
+const Loader = (callback?: (...args: any[]) => any) => {
     let loaded = 0
     const fn = () => {
         if (!--loaded && callback) callback()
