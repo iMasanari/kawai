@@ -48,3 +48,11 @@ body{
 	margin: 30px;
 	text-align: center;
 }
+
+.loading-image {
+	display: inline-block;
+	width: 27px;
+	height: 27px;
+	background: url('../pic/loading.gif') center no-repeat;
+	background-size: contain;
+}

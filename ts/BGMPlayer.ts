@@ -14,7 +14,7 @@ class BGMPlayer {
     load(url: string, callback?: () => any) {
         // キャッシュをチェック
         if (this.bufferList[url]) {
-            if (callback) requestAnimationFrame(callback)
+            if (callback) setTimeout(callback, 1)
             return
         }
 
@@ -24,26 +24,40 @@ class BGMPlayer {
         xhr.responseType = 'arraybuffer'
 
         xhr.onload = () => {
+            if (xhr.status != 200) {
+                if (callback) callback()
+
+                return
+            }
+
             this.context.decodeAudioData(xhr.response, buffer => {
                 this.bufferList[url] = buffer
 
                 if (callback) callback()
             })
         }
+        xhr.onerror = () => {
+            if (callback) callback()
+        }
+
 
         xhr.send()
     }
-    getControler(url: string): BGMPlayer.Controler {
+    getControler(url: string) {
+        const buffer = this.bufferList[url]
+
+        if (!buffer) return null
+
         const source = this.context.createBufferSource()
         const gainNode = this.context.createGain()
 
-        source.buffer = this.bufferList[url]
+        source.buffer = buffer
         source.loop = true
 
         source.connect(gainNode)
         gainNode.connect(this.context.destination)
 
-        return {
+        return <BGMPlayer.Controler>{
             source: source,
             gain: gainNode.gain
         }
@@ -66,10 +80,14 @@ class BGMPlayer {
     play(name: string) {
         this.stop()
 
-        const offsetTime = (this.context.currentTime - this.startTime) % this.bufferList[name].duration;
-
         this.playing = this.getControler(name)
-        this.playing.source.start(0, offsetTime)
+
+        if (this.playing) {
+            const offsetTime = (this.context.currentTime - this.startTime) % this.bufferList[name].duration
+
+            this.playing.source.start(0, offsetTime)
+
+        }
     }
     stop() {
         if (this.playing) this.playing.source.stop()

@@ -7,29 +7,38 @@ const comic = document.getElementById('comic') !
 const loading = document.getElementById('loading') !
 const next = document.getElementById('next') !
 
+const nextText = document.getElementById('next-text') !
+const nextTextLastpage = document.getElementById('next-text-lastpage') !
+
 /** Model */
-type State = 'top' | 'comic-loading' | 'comic-loaded'
+const enum State {
+    top,
+    comicLoading,
+    comicLoaded
+}
+
 let pageIndex: number
 let pageState: State
 
 const bgm = new BGMPlayer()
 const page = new Page(document.getElementById('pages') !, bgm)
 
-bgm.start()
-
 topPage.addEventListener('click', nextButton)
 next.addEventListener('click', nextButton)
-window.addEventListener('hashchange', router)
+window.addEventListener('popstate', router)
 
+bgm.start()
 router()
 
 function router() {
-    update(+location.hash.slice(1) || 0)
+    update(+location.hash.slice(2) || 0)
 }
 
 function nextButton() {
     scrollTo(0, 0)
-    location.hash = pageDataList[pageIndex] ? `#${pageIndex + 1}` : '#'
+    
+    update(isLastpage() ? 0 : pageIndex + 1)
+    history.pushState(null, '', pageIndex ? `#/${pageIndex}` : location.pathname);
 }
 
 function update(index: number) {
@@ -39,40 +48,53 @@ function update(index: number) {
     bgm.stop()
 
     if (pageIndex === 0) {
-        render('top')
+        render(State.top)
         preloadBGM()
     }
     else {
-        render('comic-loading')
+        render(State.comicLoading)
 
         page.createScene(pageDataList[pageIndex - 1], () => {
-            render('comic-loaded')
+            render(State.comicLoaded)
             preloadBGM()
         })
     }
 }
 
 function render(state: State) {
+    function showElement(ele: HTMLElement) {
+        ele.style.display = null
+    }
+    function hiddenElement(ele: HTMLElement) {
+        ele.style.display = 'none'
+    }
     switch (pageState = state) {
-        case 'top': {
-            topPage.style.display = null
-            comic.style.display = 'none'
+        case State.top: {
+            showElement(topPage)
+            hiddenElement(comic)
 
             break
         }
-        case 'comic-loading': {
-            topPage.style.display = 'none'
-            comic.style.display = null
-            loading.style.display = null
-            next.style.display = 'none'
+        case State.comicLoading: {
+            hiddenElement(topPage)
+            showElement(comic)
+            showElement(loading)
+            hiddenElement(next)
 
             break
         }
-        case 'comic-loaded': {
-            topPage.style.display = 'none'
-            comic.style.display = null
-            loading.style.display = 'none'
-            next.style.display = null
+        case State.comicLoaded: {
+            hiddenElement(loading)
+            showElement(next)
+
+            if (isLastpage()) {
+                showElement(nextTextLastpage)
+                hiddenElement(nextText)
+            }
+            else {
+                hiddenElement(nextTextLastpage)
+                showElement(nextText)
+            }
 
             break
         }
@@ -85,7 +107,7 @@ function preloadBGM() {
     if (!nextPage) return
 
     const loop = (list: PageData[]) => {
-        if (pageState === 'comic-loading') return
+        if (pageState === State.comicLoading) return
 
         const page = list.shift()
 
@@ -97,4 +119,8 @@ function preloadBGM() {
     }
 
     loop(nextPage.slice())
+}
+
+function isLastpage() {
+    return !pageDataList[pageIndex]
 }

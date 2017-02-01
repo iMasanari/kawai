@@ -65,18 +65,16 @@ class Page {
             }
         })
 
-        this.bgm.load(data.sound, loader.callback())
+        this.bgm.load(data.sound, loader.getCallback())
 
-        // img: HTMLImageElement
-        img.onload = loader.callback()
+        img.onload = img.onerror = loader.getCallback()
         img.src = data.image
 
-        // el: HTMLLIElement
         el.className = 'page'
         el.appendChild(img)
     }
     clear() {
-        ++this.sceneHash
+        this.sceneHash = Math.random()
 
         this.offsetList.forEach(v => {
             if (v.el.parentNode) v.el.parentNode.removeChild(v.el)
@@ -119,7 +117,7 @@ const Loader = (callback?: (...args: any[]) => any) => {
     }
 
     return {
-        callback() {
+        getCallback() {
             ++loaded
             return fn
         }
